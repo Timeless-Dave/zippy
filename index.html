@@ -433,6 +433,103 @@
         ::-webkit-scrollbar-thumb:hover {
             background: rgba(167, 139, 250, 0.5);
         }
+        
+        /* Mode Selector Styles */
+        .mode-selector {
+            margin-bottom: 28px;
+        }
+        
+        .mode-selector label {
+            display: block;
+            margin-bottom: 16px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            letter-spacing: 0.3px;
+        }
+        
+        .mode-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 12px;
+        }
+        
+        .mode-option {
+            position: relative;
+            cursor: pointer;
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(30, 30, 30, 0.6);
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            aspect-ratio: 1;
+        }
+        
+        .mode-option:hover {
+            border-color: rgba(167, 139, 250, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(167, 139, 250, 0.2);
+        }
+        
+        .mode-option.selected {
+            border-color: rgba(167, 139, 250, 0.8);
+            background: rgba(139, 92, 246, 0.15);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.2);
+        }
+        
+        .mode-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .mode-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        
+        .mode-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            padding: 6px 4px 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            text-transform: capitalize;
+            letter-spacing: 0.3px;
+        }
+        
+        .mode-check {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 20px;
+            height: 20px;
+            background: rgba(139, 92, 246, 0.95);
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mode-option.selected .mode-check {
+            display: flex;
+            animation: checkPop 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes checkPop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -463,6 +560,13 @@
                         <span id="charCount">0</span> / 5000 characters
                     </div>
                 </div>
+                
+                <div class="mode-selector">
+                    <label>Character Mode:</label>
+                    <div class="mode-grid" id="modeGrid">
+                        <!-- Mode options will be dynamically inserted here -->
+                    </div>
+                </div>
 
                 <button type="submit" id="submitBtn">
                     Generate Video
@@ -488,7 +592,22 @@
         // ============================================
         // CONFIGURATION - Update this with your n8n webhook URL
         // ============================================
-        const WEBHOOK_URL = 'https://jolthedev.app.n8n.cloud/webhook/zippy-media-factory';
+        const WEBHOOK_URL = 'https://jolthedev.app.n8n.cloud/webhook-test/zippy-media-factory';
+        
+        // Character modes with their Cloudinary URLs
+        const CHARACTER_MODES = [
+            { name: 'zippy', url: 'https://m.media-amazon.com/images/I/61HZUN7XGCL._AC_UY1000_.jpg' },
+            { name: 'cheerful', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762371674/cheerfull_yzd7oz.png' },
+            { name: 'flying pose', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762371712/flying_pose_b1pylp.png' },
+            { name: 'flying satchel', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762371747/flying_satchel_wepdf0.png' },
+            { name: 'neutral', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762341888/neutral_xoz6ac.png' },
+            { name: 'reading', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762371798/reading_pose_mulmcj.png' },
+            { name: 'satchel pose', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762371827/satchel_pose_z7rnnn.png' },
+            { name: 'shocked', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762371863/shocked_zjeieo.png' },
+            { name: 'smirking', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762372019/smirking_r0yyr0.png' },
+            { name: 'thinking', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762372225/thinking_sevy1m.png' },
+            { name: 'thumbs up', url: 'https://res.cloudinary.com/duwjyhy5w/image/upload/v1762372321/thumbs_up_pose_sjoo9f.png' }
+        ];
         
         // Display current webhook URL in the UI
         document.getElementById('currentWebhookUrl').textContent = WEBHOOK_URL;
@@ -505,8 +624,50 @@
         const videoPlayer = document.getElementById('videoPlayer');
         const downloadBtn = document.getElementById('downloadBtn');
         const newVideoBtn = document.getElementById('newVideoBtn');
+        const modeGrid = document.getElementById('modeGrid');
         
         let currentVideoBlob = null;
+        let selectedMode = 'neutral'; // Default to neutral
+        
+        // ============================================
+        // Initialize Mode Selector
+        // ============================================
+        function initializeModeSelector() {
+            CHARACTER_MODES.forEach((mode, index) => {
+                const modeOption = document.createElement('div');
+                modeOption.className = 'mode-option';
+                if (mode.name === 'neutral') {
+                    modeOption.classList.add('selected');
+                }
+                
+                modeOption.innerHTML = `
+                    <input type="radio" name="mode" value="${mode.name}" id="mode-${index}" ${mode.name === 'neutral' ? 'checked' : ''}>
+                    <img src="${mode.url}" alt="${mode.name}" class="mode-image" loading="lazy">
+                    <div class="mode-label">${mode.name}</div>
+                    <div class="mode-check">✓</div>
+                `;
+                
+                modeOption.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.mode-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    modeOption.classList.add('selected');
+                    
+                    // Update selected mode
+                    const radio = modeOption.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    selectedMode = mode.name;
+                });
+                
+                modeGrid.appendChild(modeOption);
+            });
+        }
+        
+        // Initialize on page load
+        initializeModeSelector();
         
         // ============================================
         // Character Counter
@@ -565,6 +726,10 @@
             videoContainer.classList.remove('visible');
             
             try {
+                // Get the selected mode's URL
+                const selectedModeData = CHARACTER_MODES.find(m => m.name === selectedMode);
+                const modeUrl = selectedModeData ? selectedModeData.url : CHARACTER_MODES.find(m => m.name === 'neutral').url;
+                
                 // Send script to n8n webhook with extended timeout
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes timeout
@@ -574,7 +739,10 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ script: script }),
+                    body: JSON.stringify({ 
+                        script: script,
+                        characterMode: modeUrl
+                    }),
                     signal: controller.signal
                 });
                 
