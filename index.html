@@ -148,13 +148,61 @@
             color: rgba(255, 255, 255, 0.3);
         }
         
+        .textarea-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            gap: 12px;
+        }
+        
         .char-count {
-            text-align: right;
             font-size: 12px;
             color: rgba(255, 255, 255, 0.4);
-            margin-top: 8px;
             font-weight: 500;
             transition: color 0.3s ease;
+        }
+        
+        .resolution-selector {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .resolution-selector label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            margin: 0;
+        }
+        
+        .resolution-selector select {
+            background: rgba(30, 30, 30, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+            font-family: inherit;
+        }
+        
+        .resolution-selector select:hover {
+            border-color: rgba(167, 139, 250, 0.4);
+            background: rgba(30, 30, 30, 0.95);
+        }
+        
+        .resolution-selector select:focus {
+            border-color: rgba(167, 139, 250, 0.6);
+            box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.1);
+        }
+        
+        .resolution-selector select option {
+            background: #1a1a1a;
+            color: white;
         }
         
         button[type="submit"] {
@@ -556,8 +604,17 @@
                         required
                         maxlength="5000"
                     ></textarea>
-                    <div class="char-count">
-                        <span id="charCount">0</span> / 5000 characters
+                    <div class="textarea-footer">
+                        <div class="char-count">
+                            <span id="charCount">0</span> / 5000 characters
+                        </div>
+                        <div class="resolution-selector">
+                            <label for="resolution">Resolution:</label>
+                            <select id="resolution" name="resolution">
+                                <option value="480p">480P</option>
+                                <option value="720p" selected>720P</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
                 
@@ -730,6 +787,9 @@
                 const selectedModeData = CHARACTER_MODES.find(m => m.name === selectedMode);
                 const modeUrl = selectedModeData ? selectedModeData.url : CHARACTER_MODES.find(m => m.name === 'neutral').url;
                 
+                // Get the selected resolution
+                const resolution = document.getElementById('resolution').value;
+                
                 // Send script to n8n webhook with extended timeout
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes timeout
@@ -741,7 +801,8 @@
                     },
                     body: JSON.stringify({ 
                         script: script,
-                        characterMode: modeUrl
+                        characterMode: modeUrl,
+                        resolution: resolution
                     }),
                     signal: controller.signal
                 });
