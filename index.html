@@ -792,7 +792,7 @@
                 
                 // Send script to n8n webhook with extended timeout
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 180000); // 3 minutes timeout
+                const timeoutId = setTimeout(() => controller.abort(), 900000); // 15 minutes timeout
                 
                 const response = await fetch(WEBHOOK_URL, {
                     method: 'POST',
@@ -879,7 +879,7 @@
                 // Better error messages
                 let errorMessage = 'Error: ';
                 if (error.name === 'AbortError') {
-                    errorMessage += 'Request timed out after 3 minutes. The server might be busy.';
+                    errorMessage += 'Request timed out after 15 minutes. The server might be busy.';
                 } else if (error.message === 'Failed to fetch') {
                     errorMessage += 'Network error. Check your internet connection and webhook URL.';
                 } else {
